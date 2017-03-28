@@ -132,31 +132,35 @@ golay_codeword_t golay_correct(golay_codeword_t codeword_)
 
   uint32_t syndrome;
 
-  int trial_bit, threshold, weight, i;
+  int trial_bit, threshold, weight;
 
-  for(i=0; i<24; i++) {
-    trial_bit = -1;
+#if 1
+  for(int i=0; i<23; i++) {
+    trial_bit = 0;
     threshold = 3;
     codeword_tmp = codeword;
 
     while(trial_bit < 24) {
 
       syndrome = golay_calc_syndrome(codeword);
-      printf("%s\n", bits_to_binary(syndrome, 23));
+      printf("%d %d %d %d\n", trial_bit, threshold, codeword, syndrome);
+        printf("%s\n", bits_to_binary(syndrome, 23));
+        printf("%s\n", bits_to_binary(codeword, 23));
       weight = golay_calc_weight(syndrome);
       if(weight <= threshold) {
         codeword ^= syndrome;
+        codeword = golay_rotate_right23(codeword, i);
         goto exit;
       }
 
-      trial_bit++;
       codeword = codeword_tmp ^ (1 << trial_bit); // try new bit
+      trial_bit++;
       threshold = 2;
     }
 
     codeword = golay_rotate_left23(codeword, 1);
   }
-  /*
+#else
   trial_bit = -1;
   threshold = 3;
   weight = 0;
@@ -177,6 +181,7 @@ golay_codeword_t golay_correct(golay_codeword_t codeword_)
     } else {
       for(int i=0; i<23; i++) {
         //printf("%d\n", i);
+      printf("%d %d %d %d\n", trial_bit, threshold, codeword, syndrome);
         errors = golay_calc_weight(syndrome);
 
         printf("%d\n", errors);
@@ -194,12 +199,12 @@ golay_codeword_t golay_correct(golay_codeword_t codeword_)
       }
       trial_bit++;
     }
-  }// */
+  }
+#endif
 
   codeword = codeword_save;
 
 exit:
-  codeword = golay_rotate_right23(codeword, i);
   result.data = codeword;
   result.check = codeword >> 12;
   return result;
@@ -269,7 +274,7 @@ int main()
   print_golay_codeword(codeword);
 
   codeword.data &= ~(1 << 3);
-  codeword.data &= ~(1 << 6);
+  codeword.data &= ~(1 << 7);
   codeword.check |= 1 << 0;
 
   printf("%ld\n", sizeof(golay_codeword_t));
